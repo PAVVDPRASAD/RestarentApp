@@ -1,10 +1,9 @@
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useContext} from 'react'
 
-import Navbar from '../Navbar'
-import ItemDetailsLists from '../ItemDetailsLists'
+import Header from '../Header'
+import DishItem from '../DishItem'
 
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.bundle'
+import CartContext from '../../context/CartContext'
 
 import './index.css'
 
@@ -13,38 +12,7 @@ const Home = () => {
   const [response, setResponse] = useState([])
   const [activeCategoryId, setActiveCategoryId] = useState('')
 
-  const [cartItems, setCartItems] = useState([])
-
-  const addItemToCart = dish => {
-    const isAlreadyExists = cartItems.find(item => item.dishId === dish.dishId)
-    if (!isAlreadyExists) {
-      const newDish = {...dish, quantity: 1}
-      setCartItems(prev => [...prev, newDish])
-    } else {
-      setCartItems(prev =>
-        prev.map(item =>
-          item.dishId === dish.dishId
-            ? {...item, quantity: item.quantity + 1}
-            : item,
-        ),
-      )
-    }
-  }
-
-  const removeItemFromCart = dish => {
-    const isAlreadyExists = cartItems.find(item => item.dishId === dish.dishId)
-    if (isAlreadyExists) {
-      setCartItems(prev =>
-        prev
-          .map(item =>
-            item.dishId === dish.dishId
-              ? {...item, quantity: item.quantity - 1}
-              : item,
-          )
-          .filter(item => item.quantity > 0),
-      )
-    }
-  }
+  const {cartList, setRestaurantName} = useContext(CartContext)
 
   const getUpdatedData = tableMenuList =>
     tableMenuList.map(eachMenu => ({
@@ -65,22 +33,29 @@ const Home = () => {
       })),
     }))
 
+  const fetchRestaurantApi = async () => {
+    const api =
+      'https://apis2.ccbp.in/restaurant-app/restaurant-menu-list-details'
+    const apiResponse = await fetch(api)
+    const data = await apiResponse.json()
+    const updatedData = getUpdatedData(data[0].table_menu_list)
+    setResponse(updatedData)
+    setRestaurantName(data[0].restaurant_name)
+    setActiveCategoryId(updatedData[0].menuCategoryId)
+    setIsLoading(false)
+  }
+
   useEffect(() => {
-    const fetchRestaurantApi = async () => {
-      const api =
-        'https://apis2.ccbp.in/restaurant-app/restaurant-menu-list-details'
-      const apiResponse = await fetch(api)
-      const data = await apiResponse.json()
-      const updatedData = getUpdatedData(data[0].table_menu_list)
-      setResponse(updatedData)
-      setActiveCategoryId(updatedData[0].menuCategoryId)
-      setIsLoading(false)
-    }
     fetchRestaurantApi()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const onUpdateActiveCategoryIdx = menuCategoryId =>
     setActiveCategoryId(menuCategoryId)
+
+  const addItemToCart = () => {}
+
+  const removeItemFromCart = () => {}
 
   const renderTabMenuList = () =>
     response.map(eachCategory => {
@@ -115,10 +90,9 @@ const Home = () => {
     return (
       <ul className="m-0 d-flex flex-column dishes-list-container">
         {categoryDishes.map(eachDish => (
-          <ItemDetailsLists
+          <DishItem
             key={eachDish.dishId}
             dishDetails={eachDish}
-            cartItems={cartItems}
             addItemToCart={addItemToCart}
             removeItemFromCart={removeItemFromCart}
           />
@@ -137,7 +111,7 @@ const Home = () => {
     renderSpinner()
   ) : (
     <div className="home-background">
-      <Navbar cartItems={cartItems} />
+      <Header cartItems={cartList} />
       <ul className="m-0 ps-0 d-flex tab-container">{renderTabMenuList()}</ul>
       {renderDishes()}
     </div>

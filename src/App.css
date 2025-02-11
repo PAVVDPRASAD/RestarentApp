@@ -10,11 +10,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-p {
-  font-family: 'Roboto';
-  color: black;
-}
-h1 {
-  font-family: 'Roboto';
-  color: black;
+.tabs-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+
+  padding: 10px;
 }
